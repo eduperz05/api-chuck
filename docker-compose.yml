@@ -1,0 +1,30 @@
+version: '3'
+services:
+  db:
+    container_name: chuck-db
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_SCHEMA}
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./.env:/app/.env
+      - chuck_norris_db:/var/lib/mysql/data
+    restart: always
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DB_HOST=chuck-db
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./.env:/app/.env
+    depends_on:
+      - db
+    restart: always
+
+volumes:
+  chuck_norris_db:
