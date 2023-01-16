@@ -5,7 +5,7 @@ import { HistoryRepository } from "../../API/repositories/history";
 
 export const findRandom = async(quoteRepository: QuoteRepository, category?: string) => {
   const quote = category ? await quoteRepository.findByCategory(category) : await quoteRepository.findRandom();
-  if (!quote.data.value) {
+  if (!quote) {
     throw new QuoteNotFoundError("Coudn't connect with the API.");
   }
   return quote.data;
@@ -14,7 +14,7 @@ export const findRandom = async(quoteRepository: QuoteRepository, category?: str
 export const findByWord = async(search: string, options: object, quoteRepository: QuoteRepository, historyRepository: HistoryRepository) => {
   const response = await quoteRepository.findByWord(search);
   if (response.data.result.length == 0) {
-    throw new QuoteNotFoundError(`No quotes found with the query ${search}.`);
+    throw new QuoteNotFoundError(`No quotes found with the query "${search}".`);
   }
   const modelQuote = response.data.result.map((quote: { id: string; value: string; url: string; icon_url: string; created_at: string; updated_at: string; }) => {
     return {
@@ -34,6 +34,7 @@ export const findByWord = async(search: string, options: object, quoteRepository
     })
   );
   const quotes = await historyRepository.findBySearch(search, options);
+  quotes.rows = quotes.rows.map((quote: { toJSON: () => any; }) => quote.toJSON());
   return quotes;
 };
 

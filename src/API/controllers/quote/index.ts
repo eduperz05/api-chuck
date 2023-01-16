@@ -5,6 +5,7 @@ import { errorQuoteHandler } from "../../../error/errorQuoteHandler/index";
 import { HistoryRepositorySequelize } from "../../repositories/history";
 import paginate from "express-paginate";
 import { EmailHelperNodemailer } from "../../../utils/helpers/emailHelper";
+import util from "util";
 
 
 export const randomController = async(req: Request, res: Response) => {
@@ -52,7 +53,7 @@ export const searchController = async(req: Request, res: Response) => {
         from: process.env.EMAIL_USER,
         to: to,
         subject: `Chuck Norris facts with ${req.params.search} in.`,
-        text: JSON.stringify(content)
+        text: util.inspect(content, { showHidden: false, depth: null })
       };
       emailHelper.sendEmail(mailData, res);
       return;
