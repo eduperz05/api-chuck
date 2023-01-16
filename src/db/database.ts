@@ -1,5 +1,5 @@
 import { Sequelize } from "sequelize-typescript";
-import { Quote } from "../API/models/quote/quote";
+import { History } from "../API/models/history";
 
 export const db = new Sequelize({
   dialect: "mariadb",
@@ -8,6 +8,6 @@ export const db = new Sequelize({
   port: Number(process.env.DB_PORT) || 3306,
   username: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "123456",
-  models: [Quote],
+  models: [History],
   logging: false,
 });

@@ -3,9 +3,8 @@ import { createConnection } from "mariadb";
 
 
 export const connectDB = async() => {
-  const algo = process.env.DB_USER;
   await checkDB();
-  await db.sync({ "alter": true }).then(() => {
+  await db.sync({ "force": true }).then(() => {
     console.log("Connected to database");
   }).catch((err) => {
     console.log("Err", err);

@@ -10,8 +10,7 @@ services:
       - "3306:3306"
     volumes:
       - ./.env:/app/.env
-      - chuck_norris_db:/var/lib/mysql/data
-    restart: always
+      - data:/var/lib/mysql
   api:
     build:
       context: .
@@ -27,4 +26,4 @@ services:
     restart: always
 
 volumes:
-  chuck_norris_db:
+  data:

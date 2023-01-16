@@ -1,62 +1,63 @@
 import { Request, Response } from "express";
-import { QuoteRepositorySequelize } from "../../repositories/quote/index";
-import { createQuote, findRandom, findByWord, findByCategory } from "../../../service/quote";
+import { QuoteRepositoryAxios } from "../../repositories/quote/index";
+import { findRandom, findByWord } from "../../../service/quote";
 import { errorQuoteHandler } from "../../../error/errorQuoteHandler/index";
+import { HistoryRepositorySequelize } from "../../repositories/history";
+import paginate from "express-paginate";
+import { EmailHelperNodemailer } from "../../../utils/helpers/emailHelper";
 
-
-export const createController = async(req: Request, res: Response) => {
-  try {
-    if (!req.body.message || !req.body.category) {
-      res.status(400).json({ message: "Missing message or category" });
-      return;
-    }
-    const repository = new QuoteRepositorySequelize();
-    const quote = await createQuote({
-      message: req.body.message,
-      category: req.body.category
-    }, repository);
-    res.status(200).json({ message: "Quote created", quote });
-  } catch (err) {
-    errorQuoteHandler(err, res);
-  }
-  return;
-};
 
 export const randomController = async(req: Request, res: Response) => {
   try {
-    const repository = new QuoteRepositorySequelize();
-    const quote = await findRandom(repository);
-    res.status(200).json({ message: "Quote created", quote });
+    const repository = new QuoteRepositoryAxios();
+    const quote = req.params.category ? await findRandom(repository, req.params.category)
+      : await findRandom(repository);
+    res.status(200).json(quote);
   } catch (err) {
     errorQuoteHandler(err, res);
   }
   return;
 };
 
-export const wordController = async(req: Request, res: Response) => {
+export const searchController = async(req: Request, res: Response) => {
   try {
-    if (!req.params.word) {
-      res.status(400).json({ message: "Missing word" });
+    if (!req.params.search) {
+      res.status(400).json({ message: "Missing search parameter" });
       return;
     }
-    const repository = new QuoteRepositorySequelize();
-    const quote = await findByWord(req.params.word, repository);
-    res.status(200).json({ message: "Quote created", quote });
-  } catch (err) {
-    errorQuoteHandler(err, res);
-  }
-  return;
-};
+    const sendMail = req.query.sendMail ? true : false;
+    const options = {
+      page: Number(req.query.page),
+      limit: Number(req.query.limit),
+      skip: Number(req.skip)
+    };
+    const repositoryAxios = new QuoteRepositoryAxios();
+    const repositorySequelize = new HistoryRepositorySequelize();
+    const emailHelper = new EmailHelperNodemailer();
 
-export const categoryController = async(req: Request, res: Response) => {
-  try {
-    if (!req.params.category) {
-      res.status(400).json({ message: "Missing category" });
+    const quotes = await findByWord(req.params.search, options, repositoryAxios, repositorySequelize);
+    const content = {
+      quotes: quotes.rows,
+      pageCount: Math.ceil(quotes.count / options.limit),
+      itemCount: quotes.count,
+      pages: paginate.getArrayPages(req)(9, Math.ceil(quotes.count / options.limit), options.page)
+    };
+    if (sendMail){
+      if (!req.body.to) {
+        res.status(400).json({ message: "Missing email to send data." });
+        return;
+      }
+      const { to } = req.body;
+      const mailData = {
+        from: process.env.EMAIL_USER,
+        to: to,
+        subject: `Chuck Norris facts with ${req.params.search} in.`,
+        text: JSON.stringify(content)
+      };
+      emailHelper.sendEmail(mailData, res);
       return;
     }
-    const repository = new QuoteRepositorySequelize();
-    const quote = await findByCategory(req.params.category, repository);
-    res.status(200).json({ message: "Quote created", quote });
+    res.status(200).json(content);
   } catch (err) {
     errorQuoteHandler(err, res);
   }

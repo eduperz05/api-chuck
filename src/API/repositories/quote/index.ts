@@ -1,38 +1,22 @@
-import { Quote } from "../../models/quote/quote";
-import * as sequelize from "sequelize";
+import axios, { AxiosResponse } from "axios";
 
 export interface QuoteRepository {
-  create(quote: any): Promise<Quote>;
-  findRandom(): Promise<Quote|null>;
-  findByWord(word: string): Promise<Quote[]>;
-  findByCategory(category: string): Promise<Quote[]>;
+  findRandom(): Promise<any|null>;
+  findByCategory(category: string): Promise<any|null>;
+  findByWord(word: string): Promise<any|null>;
 }
 
-export class QuoteRepositorySequelize implements QuoteRepository {
+export class QuoteRepositoryAxios implements QuoteRepository {
   
-  public create(quote: any): Promise<Quote> {
-    return Quote.create(quote);
+  public async findRandom(): Promise<AxiosResponse> {
+    return await axios.get("https://api.chucknorris.io/jokes/random");
   }
 
-  public findRandom(): Promise<Quote|null> {
-    return Quote.count().then((count: number) => {
-      return Quote.findByPk(Math.floor(Math.random() * count));
-    });
+  public async findByCategory(category: string): Promise<AxiosResponse> {
+    return await axios.get(`https://api.chucknorris.io/jokes/random?category=${category}`);
   }
 
-  public findByWord(word: string): Promise<Quote[]> {
-    return Quote.findAll({
-      where: {
-        message: { [sequelize.Op.like]: `%${word}%` }
-      }
-    });
-  }
-
-  public findByCategory(category: string): Promise<Quote[]> {
-    return Quote.findAll({
-      where: {
-        category: category
-      }
-    });
+  public async findByWord(query: string): Promise<AxiosResponse> {
+    return await axios.get(`https://api.chucknorris.io/jokes/search?query=${query}`);
   }
 }
